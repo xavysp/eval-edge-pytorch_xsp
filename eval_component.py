@@ -1,23 +1,25 @@
 import os
+import numpy as np
+from itertools import product
 from argparse import ArgumentParser
+from os.path import join
 
 from nms_process import nms_process
 from impl.edges_eval_dir import edges_eval_dir
 
-from os.path import join
-
 
 def eval_one_epoch(args):
 
-    print(args.root)
-    result_dir = join(args.root, "mat")  # forward result directory
+    #print(args.root)
+    result_dir = join(args.root, "png")  # forward result directory
     nms_dir = join(args.root, "nms")  # forward result directory
 
     datasets = {
         "BSDS": "GT/BSDS",
         "BIPED": "GT/BIPED",
         "NYUD": "GT/NYUD",
-        "UDED": "GT/UDED"
+        "UDED": "GT/UDED",
+        "TEEDedges": "GT/TEEDedges"
     }
 
     gt_dir = datasets[args.dataset]
@@ -28,13 +30,15 @@ def eval_one_epoch(args):
     thrs = 99 if args.full else 9
 
     nms_process(result_dir, nms_dir, key, file_format)
+
+
     edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075, workers=-1)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser("edge eval")
     parser.add_argument("root", type=str, default="examples/hed_result", help="results directory")
-    parser.add_argument("--key", type=str, default="img", help="key")
+    parser.add_argument("--key", type=str, default="groundTruth", help="key")
     parser.add_argument("--file_format", type=str, default=".mat", help=".mat or .npy")
     parser.add_argument("--workers", type=int, default="-1", help="number workers, -1 for all workers")
     parser.add_argument("--dataset")

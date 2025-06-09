@@ -10,17 +10,69 @@ I just added some optimizations for ease of use. Currently, BSDS, NYUD, BIPED, U
 * Python3
 * Numpy
 * Scipy >= 1.6.0
-* g++
+* Opencv
+* tqdm
 * Matplotlib
+* g++
 
-## Install
-### 1. clone repository
+## Operating System Compatibility
+This project supports both Linux and Windows environments. 
+
+But for Windows users, you must install WSL (Windows Subsystem for Linux). 
+
+#### Step-by-Step WSL Installation:
+### 1. Check virtualization support
+* Open Task Manager → Performance → CPU, and confirm that Virtualization is enabled.
+* If it is disabled, you may need to enable it in your BIOS/UEFI settings. For guidance, follow this official article: [Enable virtualization on Windows](https://support.microsoft.com/es-es/windows/habilitar-la-virtualizaci%C3%B3n-en-windows-c5578302-6e43-4b4b-a449-8ced115f58e1)
+
+### 2. Enable Windows features
+* Open Control Panel → Programs and Features → Turn Windows features on or off.
+* Enable the option: Windows Subsystem for Linux
+* Restart your computer if prompted.
+
+### 3. Enable WSL (one-time setup)
+Open PowerShell as Administrator and run:
 ``` shell
-git clone https://github.com/Walstruzz/edge_eval_python.git
-cd edge_eval_python
+wsl --install
+```
+If you already have WSL installed, make sure it’s WSL2. You can check with:
+``` shell
+wsl --list --verbose
+```
+If WSL2 in not installed. You can update it with:
+``` shell
+wsl --set-version Ubuntu 2
 ```
 
-### 2. compile cxx library
+### 3. Install Ubuntu
+By default, "wsl --install" installs the latest Ubuntu version. You can also manually install other Ubuntu version from the Microsoft Store.
+
+### 4. Launch Ubuntu and finish setup:
+Run "wsl" in your terminal or open your Ubuntu version from the Start Menu. Set your username and password when prompted.
+
+### 5. Access the root directory of your WSL distribution:
+Open your Ubuntu terminal and run the following commands:
+``` shell
+cd
+explorer.exe .
+```
+This will open the current WSL directory in Windows Explorer, making it easier to copy project files into WSL.
+
+### 6. Update your packages
+Inside the Ubuntu terminal:
+``` shell
+sudo apt update && sudo apt upgrade
+```
+
+## Generic Install
+### 1. Clone repository
+``` shell
+git clone https://github.com/xavysp/eval-edge-pytorch_xsp.git
+cd eval-edge-pytorch_xsp-main
+```
+After this we recommend to create and use a python virtual environment
+
+### 2. Compile cxx library
 Most of the code in this folder is copied from [davidstutz/extended-berkeley-segmentation-benchmark](https://github.com/davidstutz/extended-berkeley-segmentation-benchmark/tree/master/source).
 
 Actually, there is a more efficient function in `Scipy` that can solve the CSA problem without compiling the following cxx codes...
@@ -30,13 +82,11 @@ source build.sh
 ```
 
 ## Usage
-### 1. save your results 
+### 1. Save your results 
+Save your result like this: [https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py](https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py).
 
-save your result like this: [https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py](https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py).
 
-Make sure that there are two folders `mat` and `png` in the results folder to save the two forms of the prediction results
-
-Let's say this folder is `/result`
+Create a `/result` folder. And make sure to create two folders `mat` and `png` in the results folder to save the two forms of the prediction results
 
 Then the folder structure should be:  
 ``` 
@@ -53,30 +103,32 @@ Then the folder structure should be:
 ```
 
 ### 2. Download GT
-Download the project and unzip the GT in the folder `.\GT`. They are available [here](https://drive.google.com/drive/folders/1j1TU28PinKipOh0egf8tbzI7EetAbzKh?usp=sharing)
+Create a `\GT` folder 
+
+Download a project and unzip the GT in the folder `\GT`
+
+They are available [here](https://drive.google.com/drive/folders/1j1TU28PinKipOh0egf8tbzI7EetAbzKh?usp=sharing)
 
 
+### 3.Evaluation
 
-
-### 3.eval
-
-####3.1  The simplest eval
-just use  
+#### 3.1  The simplest eval
+Just use  
 ``` shell
 python eval.py [input dir] -d [dataset name]  -f
 ```
 
-for example:
+For example:
 
 ``` shell
 python eval.py \result -d BSDS  -f
 ```
 
-you can eval the result of BSDS500 in dir `\result` 
+You can eval the result of BSDS500 in dir `\result` 
 
 For higher automation, we implement automatic detection of folders with simple cycle. We use the `T` and `limit` parameters to control the sleep time and total wait time for the folder traversal, the default of which is 0.5 hours and 8 hours.
 
-####3.2 No constant monitoring
+#### 3.2 No constant monitoring
 If you only need to eval existing results, you can use `notwait` to cancel the automatic check and keep waiting, as follows:
 
 
@@ -84,7 +136,7 @@ If you only need to eval existing results, you can use `notwait` to cancel the a
 python eval.py \result -d BSDS -nw -f
 ```
 
-####3.3 Default dataset
+#### 3.3 Default dataset
 
 If you can include the dataset name in the path under eval, then you don't have to specify the dataset individually:
 
@@ -93,7 +145,7 @@ If you can include the dataset name in the path under eval, then you don't have 
 python eval.py \result\bsds-result -nw -f
 ```
 
-####3.4 multiple paths
+#### 3.4 Multiple paths
 
 You can specify multiple paths to eval multiple sets of results at the same time.You need to place multiple paths inside the "", separated by Spaces. There is no support for evaling multiple datasets at the same time, so multiple results should be on the same dataset.		
 
@@ -101,7 +153,7 @@ You can specify multiple paths to eval multiple sets of results at the same time
 python eval.py "\result\bsds-result \result\bsds-result2" -nw -f
 ```
 
-####3.5 light version & full version
+#### 3.5 Light version & full version
 
 Evaluation of edge detection is known to be a very time-consuming process, in extreme cases even slower than training, such as on densely labeled datasets like BIPED.
 
@@ -120,25 +172,24 @@ python eval.py "\result\bsds-result \result\bsds-result2" -nw -f
 
 The light version is faster, but the accuracy will be about 0.5% lower than the full version, but the relative accuracy will not change, so we can use the light version to pick the best result, and then use the full version to get its true accuracy.
 
-####3.6 show result
+#### 3.6 Show result
 
- 
 To see the results better, use the following command.
 
-for full version:		
+For full version:		
 
 ``` shell
 python show.py "\result\bsds-result" -f
 ```
 
-for light version:		
+For light version:		
 
 ``` shell
 python show.py "\result\bsds-result"
 ```
 
 ## Note
-* The edges of the image are 1 and the background is 0. black background.
+* The edges of the image are 1 (white) and the background is 0 (black).
 
 
 ## Note (same as  [edge-eval-python](https://github.com/Walstruzz/edge_eval_python).)
@@ -149,9 +200,9 @@ python show.py "\result\bsds-result"
 
 ## References
 * [edge eval](https://github.com/s9xie/hed_release-deprecated/tree/master/examples/eval)
-* [extended-berkeley-segmentation-benchmark](https://github.com/davidstutz/extended-berkeley-segmentation-benchmark).
+* [extended-berkeley-segmentation-benchmark](https://github.com/davidstutz/extended-berkeley-segmentation-benchmark)
 * [bwmorph_thin](https://gist.github.com/joefutrelle/562f25bbcf20691217b8)
 * [pdollar's image & video Matlab toolbox ](https://github.com/pdollar/toolbox)
 * [pdollar's edge detection toolbox](https://github.com/pdollar/edges)
 * [PyTorch Reimplementation of HED](https://github.com/xwjabc/hed)
-* [edge-eval-python](https://github.com/Walstruzz/edge_eval_python).
+* [edge-eval-python](https://github.com/Walstruzz/edge_eval_python)
