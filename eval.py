@@ -35,6 +35,7 @@ def getFlist(args):
     dirs_ = set()
     file_dirs = args.eval_dir.split(' ')
     print("*" * 40)
+    print("file dirs> ", file_dirs)
     for file_dir in file_dirs:
         for root, _, _ in os.walk(file_dir):
             if need_test(root, args.dataset, args.full, args.file_format):
@@ -80,10 +81,11 @@ class Parser_One_Epoch(object):
         self.file_format = file_format
         self.full = full
 
-def Main_func(args):
+def main_func(args):
     qtimer = Quit_timer(args.T, args.limit)
     while True:
         fset = getFlist(args)
+        print(fset)
         if len(fset) != 0:
             for updataset in fset:
                 parser_one_epoch = Parser_One_Epoch(updataset, args.dataset, args.full, args.file_format)
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", '--full', action="store_true")
 
     parser.add_argument('--file_format', type=str, default=".png", choices=[".mat", ".npy", ".png"],
-                    help="Formato de archivos a evaluar")
+                    help="File formats")
 
     parser.add_argument('eval_dir')
     args = parser.parse_args()
@@ -125,4 +127,4 @@ if __name__ == '__main__':
     if args.dataset is None:
         raise Exception("Point out dataset in test dir OR point out dataset in args.dataset")
     print(f"Starting to eval result on dataset: {args.dataset}, using format: {args.file_format} on predicted images")
-    Main_func(args)
+    main_func(args)

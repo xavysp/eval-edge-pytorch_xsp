@@ -41,7 +41,9 @@ def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=F
             gt = [g.item()[0] for g in loadmat(gt)["groundTruth"][0]]
     elif isinstance(gt, str) and gt.endswith(".png"):
         gt_img = cv2.imread(gt, cv2.IMREAD_GRAYSCALE)
-        gt_bin = (gt_img > 127).astype(np.uint8)  # blanco = borde
+        # gt_bin = (gt_img > 127).astype(np.uint8)  # white = edge
+        gt_bin = (gt_img > 64).astype(np.uint8) # white = edge for UDED
+
         gt = [gt_bin]
     else:
         raise ValueError(f"Formato GT no soportado: {gt}")
@@ -120,6 +122,8 @@ def find_best_rpf(t, r, p):
 
 
 def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=True, workers=1):
+    print(" res vals max_dist> ",max_dist)
+
     if thrs != 99:
         eval_dir = f"{res_dir}-eval-{thrs}"
     else:
@@ -174,10 +178,12 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
 
     bdry = np.array([[ods_t, ods_r, ods_p, ods_f, ois_r.item(), ois_p.item(), ois_f.item(), ap]])
     bdry_thr = np.stack([t, r, p, f], axis=0).T
+    print("****** evaluation files starting to write ******")
     np.savetxt(os.path.join(eval_dir, "eval_bdry_img.txt"), scores, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry_thr.txt"), bdry_thr, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry.txt"), bdry, fmt="%.6f")
-    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f}")
+    print("****** evaluation files saved successfully ******")
+    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f}     AP: {ap:.4f}")
 
     if cleanup:
         for f in os.listdir(eval_dir):

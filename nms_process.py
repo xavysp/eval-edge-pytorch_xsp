@@ -18,7 +18,7 @@ c_float_pointer = POINTER(c_float)
 solver.nms.argtypes = [c_float_pointer, c_float_pointer, c_float_pointer, c_int, c_int, c_float, c_int, c_int]
 
 
-def nms_process_one_image(image, save_path=None, save=True):
+def nms_process_one_image(image, save_path=None, save=True,ed_si=1.01):
     """"
     :param image: numpy array, edge, model output
     :param save_path: str, save path
@@ -44,7 +44,8 @@ def nms_process_one_image(image, save_path=None, save=True):
     ori = np.mod(np.arctan2(oyy * np.sign(-oxy), oxx + 1e-5), np.pi)
 
     out = np.zeros_like(edge)
-    r, s, m, w, h = 1, 5, float(1.01), int(out.shape[1]), int(out.shape[0])
+    r, s, m, w, h = 1, 5, float(ed_si), int(out.shape[1]), int(out.shape[0])
+    print("NMS params> ",r,s,m)
     solver.nms(out.ctypes.data_as(c_float_pointer),
                edge.ctypes.data_as(c_float_pointer),
                ori.ctypes.data_as(c_float_pointer),
@@ -55,7 +56,8 @@ def nms_process_one_image(image, save_path=None, save=True):
     return edge
 
 
-def nms_process(result_dir, nms_dir, key=None, file_format=".mat"):
+def nms_process(result_dir, nms_dir, key=None, file_format=".mat",
+                edge_size=1.01):
     valid_formats = {".mat", ".npy", ".png"}
     assert file_format in valid_formats
     assert os.path.isdir(result_dir)
@@ -101,11 +103,12 @@ def nms_process(result_dir, nms_dir, key=None, file_format=".mat"):
             image = cv2.imread(abs_path, cv2.IMREAD_GRAYSCALE)
             image = cv2.bitwise_not(image)  # if tmp_edges background
             image = image.astype(np.float32) / 255.0  # normalizar a [0, 1]
+            # image[image>0]=1.
 
         else:
             raise NotImplementedError(f"Formato no soportado: {ext}")
 
-        nms_process_one_image(image, save_name, True)
+        nms_process_one_image(image, save_name, True, edge_size)
 
 
 if __name__ == '__main__':
