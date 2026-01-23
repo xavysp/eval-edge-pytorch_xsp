@@ -31,9 +31,10 @@ def eval_one_epoch(args):
     print("result dir: ", result_dir)
     nms_process(result_dir, nms_dir, key, file_format,edge_size)
 
-
-    edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075, workers=-1)
-
+    edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075,
+               # numerical values depend on computational capacity
+               workers=4,           # per-threshold
+               workers_img=8)       # per-image
 
 if __name__ == '__main__':
     parser = ArgumentParser("edge eval")
@@ -44,4 +45,5 @@ if __name__ == '__main__':
     parser.add_argument("--dataset")
     parser.add_argument("-f","--full",action="store_true")
     args = parser.parse_args()
+
     eval_one_epoch(args)
