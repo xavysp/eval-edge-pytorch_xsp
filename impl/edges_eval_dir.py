@@ -33,21 +33,38 @@ def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=F
         edge = im
     assert edge.ndim == 2
 
+    
     # Cargar GT
     if isinstance(gt, str) and gt.endswith(".mat"):
-        try:
-            gt = [g.item()[1] for g in loadmat(gt)["groundTruth"][0]]
-        except:
-            gt = [g.item()[0] for g in loadmat(gt)["groundTruth"][0]]
+        data = loadmat(gt)
+        #edge_gt = data.get("edge_gt")
+        edge_gt = data.get("groundTruth")
+
+        if edge_gt is None:
+            raise ValueError(f"No se encontró el Key en {gt}")
+
+        if isinstance(edge_gt, np.ndarray) and edge_gt.ndim == 2:
+            # Caso nuevo: matriz binaria directamente
+            gt = [edge_gt.astype(np.uint8)]
+        elif isinstance(edge_gt, np.ndarray) and edge_gt.ndim == 1:
+            # Caso anterior estilo BSDS (lista de anotaciones)
+            try:
+                gt = [g.item()[1] for g in edge_gt]
+            except:
+                gt = [g.item()[0] for g in edge_gt]
+        else:
+            raise ValueError(f"Formato inesperado en 'edge_gt' con ndim = {edge_gt.ndim}")
+
     elif isinstance(gt, str) and gt.endswith(".png"):
         gt_img = cv2.imread(gt, cv2.IMREAD_GRAYSCALE)
-        # gt_bin = (gt_img > 127).astype(np.uint8)  # white = edge
+        # gt_bin = (gt_img > 127).astype(np.uint8) # white = edge
         gt_bin = (gt_img > 64).astype(np.uint8) # white = edge for UDED
-
         gt = [gt_bin]
+
     else:
         raise ValueError(f"Formato GT no soportado: {gt}")
 
+    
     def eval_threshold(k_):
         e1 = edge >= max(eps, thrs[k_])
         if thin:
@@ -121,8 +138,8 @@ def find_best_rpf(t, r, p):
     return bst_r, bst_p, bst_f, bst_t
 
 
-def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=True, workers=1):
-    print(" res vals max_dist> ",max_dist)
+def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=True,
+                   workers=1, workers_img=None):
 
     if thrs != 99:
         eval_dir = f"{res_dir}-eval-{thrs}"
@@ -134,19 +151,46 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
         return
 
     assert os.path.isdir(res_dir) and os.path.isdir(gt_dir)
-    gt_files = sorted(glob.glob(os.path.join(gt_dir, "*.mat")) + glob.glob(os.path.join(gt_dir, "*.png")))
+    gt_files = sorted(glob.glob(os.path.join(gt_dir, "*.mat")) +
+                      glob.glob(os.path.join(gt_dir, "*.png")))
     ids = [os.path.splitext(os.path.basename(f))[0] for f in gt_files]
 
-    for i in tqdm(ids):
+
+    if workers_img is None:
+        try:
+            cpu = mp.cpu_count()
+        except Exception:
+            cpu = 4
+        workers_img = max(1, cpu - 1)
+        print("WORKERS: ", cpu)
+    workers_thr = workers if isinstance(workers, int) else 1
+    if workers_thr is None:
+        workers_thr = 1
+
+    def _process_one(i):
         res = os.path.join(eval_dir, f"{i}_ev.txt")
         if os.path.isfile(res):
-            continue
+            return
         im = os.path.join(res_dir, f"{i}.png")
         gt_mat = os.path.join(gt_dir, f"{i}.mat")
         gt_png = os.path.join(gt_dir, f"{i}.png")
         gt = gt_mat if os.path.exists(gt_mat) else gt_png
-        edges_eval_img(im, gt, out=res, thrs=thrs, max_dist=max_dist, thin=thin, workers=workers)
+        
+        edges_eval_img(im, gt, out=res, thrs=thrs, max_dist=max_dist, thin=thin,
+                       workers=workers_thr, nameid=i)
 
+    if workers_img == 1:
+        for i in tqdm(ids, desc="Evaluating images", unit="img"):
+            _process_one(i)
+    else:
+        # Paraleliza por imagen con barra de progreso
+        with tqdm_joblib(tqdm(total=len(ids), desc="Evaluating images", unit="img")):
+            Parallel(n_jobs=workers_img)(
+                delayed(_process_one)(i) for i in ids
+        )
+
+
+    # --- Acumular resultados y escribir métricas ---
     cnt_sum_r_p = 0
     ois_cnt_sum_r_p = 0
     scores = np.zeros((len(ids), 5), dtype=np.float32)
@@ -178,12 +222,10 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
 
     bdry = np.array([[ods_t, ods_r, ods_p, ods_f, ois_r.item(), ois_p.item(), ois_f.item(), ap]])
     bdry_thr = np.stack([t, r, p, f], axis=0).T
-    print("****** evaluation files starting to write ******")
     np.savetxt(os.path.join(eval_dir, "eval_bdry_img.txt"), scores, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry_thr.txt"), bdry_thr, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry.txt"), bdry, fmt="%.6f")
-    print("****** evaluation files saved successfully ******")
-    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f}     AP: {ap:.4f}")
+    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f}")
 
     if cleanup:
         for f in os.listdir(eval_dir):
