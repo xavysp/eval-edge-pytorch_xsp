@@ -39,7 +39,7 @@ except Exception:
 
 eps = 2e-6
 
-def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=False, workers=1):
+def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=False, workers=1, nameid=0):
     eps = 2e-16
 
     if isinstance(thrs, list):
@@ -256,4 +256,5 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
             if f.endswith("_ev.txt"):
                 os.remove(os.path.join(eval_dir, f))
         rmtree(res_dir)
+
 
