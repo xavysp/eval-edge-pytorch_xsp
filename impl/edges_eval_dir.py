@@ -12,8 +12,32 @@ from joblib import Parallel, delayed
 from .bwmorph_thin import bwmorph_thin
 from .correspond_pixels import correspond_pixels
 
-eps = 2e-6
 
+try:
+    from tqdm.contrib import tqdm_joblib 
+except Exception:
+    # Fallback: context manager para integrar tqdm con joblib
+    from contextlib import contextmanager
+    import joblib
+
+    @contextmanager
+    def tqdm_joblib(tqdm_object):
+        """Context manager que parchea joblib para actualizar tqdm."""
+        class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+            def __call__(self, *args, **kwargs):
+                tqdm_object.update(n=self.batch_size)
+                return super().__call__(*args, **kwargs)
+
+        old_cb = joblib.parallel.BatchCompletionCallBack
+        joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+        try:
+            yield tqdm_object
+        finally:
+            joblib.parallel.BatchCompletionCallBack = old_cb
+            tqdm_object.close()
+
+
+eps = 2e-6
 
 def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=False, workers=1):
     eps = 2e-16
@@ -232,3 +256,4 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
             if f.endswith("_ev.txt"):
                 os.remove(os.path.join(eval_dir, f))
         rmtree(res_dir)
+
