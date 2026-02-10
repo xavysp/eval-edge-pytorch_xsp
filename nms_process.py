@@ -26,12 +26,10 @@ def nms_process_one_image(image, save_path=None, save=True,ed_si=1.01):
     :return: edge
     NOTE: in MATLAB, uint8(x) means round(x).astype(uint8) in numpy
     """
-
     # print("*************")
     # print("DEBUG: tipo de imagen antes de conv_tri")
     # print(type(image), image.shape, image.dtype)
     # print("*************")
-
 
     if save and save_path is not None:
         assert os.path.splitext(save_path)[-1] == ".png"
@@ -103,6 +101,7 @@ def nms_process(result_dir, nms_dir, key=None, file_format=".mat",
             image = cv2.imread(abs_path, cv2.IMREAD_GRAYSCALE)
             image = cv2.bitwise_not(image)  # if tmp_edges background
             image = image.astype(np.float32) / 255.0  # normalizar a [0, 1]
+
             # image[image>0]=1.
 
         else:

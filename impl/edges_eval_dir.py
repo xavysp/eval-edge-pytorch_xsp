@@ -82,7 +82,8 @@ def edges_eval_img(im, gt, out="", thrs=99, max_dist=0.0075, thin=True, need_v=F
     elif isinstance(gt, str) and gt.endswith(".png"):
         gt_img = cv2.imread(gt, cv2.IMREAD_GRAYSCALE)
         # gt_bin = (gt_img > 127).astype(np.uint8) # white = edge
-        gt_bin = (gt_img > 64).astype(np.uint8) # white = edge for UDED
+        gt_bin = (gt_img > 32).astype(np.uint8) # white = edge for UDED
+        # gt_bin = (gt_img > 160).astype(np.uint8) # white = edge for UDED
         gt = [gt_bin]
 
     else:
@@ -230,6 +231,7 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
         k = f.argmax()
         ois_r1, ois_p1, ois_f1, ois_t1 = find_best_rpf(t_vals, r, p)
         scores[i, :] = [i + 1, ois_t1, ois_r1, ois_p1, ois_f1]
+        # scores[i, :] = [i + 1,name, ois_t1, ois_r1, ois_p1, ois_f1] # mine
         ois_cnt_sum_r_p += res[k, :]
 
     r, p, f = compute_rpf(cnt_sum_r_p)
@@ -249,12 +251,13 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
     np.savetxt(os.path.join(eval_dir, "eval_bdry_img.txt"), scores, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry_thr.txt"), bdry_thr, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry.txt"), bdry, fmt="%.6f")
-    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f}")
+    print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f} AP: {ap:.4f}")
 
     if cleanup:
         for f in os.listdir(eval_dir):
             if f.endswith("_ev.txt"):
                 os.remove(os.path.join(eval_dir, f))
         rmtree(res_dir)
+    return # me
 
 
