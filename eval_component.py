@@ -13,7 +13,7 @@ def eval_one_epoch(args):
     print(args.root)
     result_dir = join(args.root, "png")  # forward result directory, if it is on mat "mat"
     nms_dir = join(args.root, "nms")  # forward result directory
-    edge_size = 1.3 # default UDED = 1.3, default = 1.01
+    edge_size = 1.1 # default UDED = 1.1, default = 1.01
     datasets = {
         "BSDS": "GT/BSDS",
         "BIPED": "GT/BIPED",
