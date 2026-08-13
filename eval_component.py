@@ -1,4 +1,4 @@
-import os
+import os, sys
 import numpy as np
 from itertools import product
 from argparse import ArgumentParser
@@ -9,8 +9,6 @@ from impl.edges_eval_dir import edges_eval_dir
 
 
 def eval_one_epoch(args):
-
-    print(args.root)
     result_dir = join(args.root, "png")  # forward result directory, if it is on mat "mat"
     nms_dir = join(args.root, "nms")  # forward result directory
     edge_size = 1.1 # default UDED = 1.1, default = 1.01
@@ -23,13 +21,28 @@ def eval_one_epoch(args):
     }
 
     gt_dir = datasets[args.dataset]
+    if not os.path.exists(gt_dir):
+        gt_dir = join(gt_dir , "gt")
+        print(f"** There is not {gt_dir} folder, we've created for you, restart!**")
+        os.makedirs(gt_dir)
+        sys.exit()
+    if len(next(os.walk(gt_dir))[1])>0:
+        tmp_dirs = os.listdir(gt_dir)
+        gt_dir = os.path.join(gt_dir, args.gt_dir) # only choose thye just gt in the list
+        print(f"Dataset starting to evaluating on {gt_dir}!")
+    else:
+        gt_dir = os.path.join(gt_dir, args.gt_dir)  # only choose thye just gt in the list
+        os.makedirs(join(gt_dir ), exist_ok=True)
+        sys.exit(f"** There is no ground truth for this dataset! in you {gt_dir} **")
 
     key = args.key  # x = scipy.io.loadmat(filename)[key]
     file_format = args.file_format  # ".mat", ".npy" or ".png"
 
     thrs = 99 if args.full else 9
-    print("result dir: ", result_dir)
-    nms_process(result_dir, nms_dir, key, file_format,edge_size)
+    print("Edge-maps source: ", result_dir)
+    if args.nms:
+        print("Applying NMS?", args.nms)
+        nms_process(result_dir, nms_dir, key, file_format,edge_size)
 
     edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075,
                # numerical values depend on computational capacity

@@ -1,4 +1,4 @@
-import os
+import os, sys
 import time
 from datetime import datetime
 import argparse
@@ -22,6 +22,11 @@ def need_test(root, dset, full, file_format):
         raise ValueError(f"Formato no soportado: {file_format}")
 
     format_path = os.path.join(root, format_dir)
+    if not os.path.exists(format_path) and not \
+            (os.path.split(root)[-1]==format_dir or os.path.split(root)[-1]=="nms"):
+        print(f"** There is not {format_path} folder, we've created for you, restart!**")
+        os.makedirs(format_path)
+        sys.exit()
     if format_dir in sub_pth and os.path.isdir(format_path) and flag_dir not in sub_pth:
         file_num = len(os.listdir(format_path))
         if file_num == num_test[dset]:
@@ -33,7 +38,13 @@ def need_test(root, dset, full, file_format):
 
 def getFlist(args):
     dirs_ = set()
-    file_dirs = args.eval_dir.split(' ')
+    tmp_res_dir = os.path.join("result",args.eval_dir)
+    if not os.path.exists(tmp_res_dir):
+        print(f"** There is not {tmp_res_dir} folder, we created for you, restart!**")
+        os.makedirs(tmp_res_dir)
+        return
+
+    file_dirs = tmp_res_dir.split(' ')
     print("*" * 40)
     print("file dirs> ", file_dirs)
     for file_dir in file_dirs:
@@ -74,12 +85,14 @@ class Quit_timer(object):
 
 
 class Parser_One_Epoch(object):
-    def __init__(self, root, dataset, full, file_format):
+    def __init__(self, root, dataset, full, file_format, is_nms, gt_dir):
         self.root = root
         self.dataset = dataset
         self.key = "groundTruth"
         self.file_format = file_format
         self.full = full
+        self.nms = is_nms
+        self.gt_dir = gt_dir
 
 def main_func(args):
     qtimer = Quit_timer(args.T, args.limit)
@@ -88,7 +101,8 @@ def main_func(args):
         print(fset)
         if len(fset) != 0:
             for updataset in fset:
-                parser_one_epoch = Parser_One_Epoch(updataset, args.dataset, args.full, args.file_format)
+                parser_one_epoch = Parser_One_Epoch(updataset, args.dataset, args.full,
+                                                     args.file_format, args.nms, args.gt_dir)
                 eval_one_epoch(parser_one_epoch)
 
             qtimer.refresh()
@@ -104,13 +118,18 @@ if __name__ == '__main__':
     parser.add_argument('--T', type=float, default=0.5, help="sleep time,defult 0.5 hour")
     parser.add_argument('--limit', type=float, default=8, help="time of empty cycle(hours)")
     parser.add_argument("-nw", '--notwait', action="store_true", help="whether wait new result")
-    parser.add_argument("-d", '--dataset', default=None)
+    parser.add_argument("-d", '--dataset', default="UDED")
+    parser.add_argument("-m", '--model', default="TEED")
     parser.add_argument("-f", '--full', action="store_true")
+    parser.add_argument("-nms", '--nms', type=bool, default=False)
+    parser.add_argument("-gt", '--gt_dir', type=str, default="gt_ed",
+                        help="For UDED, the gt folder may be gt_ed or gt_bd")
 
     parser.add_argument('--file_format', type=str, default=".png", choices=[".mat", ".npy", ".png"],
                     help="File formats")
 
-    parser.add_argument('eval_dir')
+    parser.add_argument("-ed",'--eval_dir',
+                        default=parser.parse_args().model+"-"+parser.parse_args().dataset)
     args = parser.parse_args()
 
     if args.dataset is not None:

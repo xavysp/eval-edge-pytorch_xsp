@@ -86,12 +86,13 @@ source build.sh
 Save your result like this: [https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py](https://github.com/Li-yachuan/CTFN-pytorch-master/blob/main/test.py).
 
 
-Create a `/result` folder. And make sure to create two folders `mat` and `png` in the results folder to save the two forms of the prediction results
+Create a `/result/"model-dataset"` folder. And make sure to create two folders `mat` and `png` in that folder to save the two forms of the prediction results.
+Otherwise, this app will create for you and tel you that the mat or png folder is needed. 
 
 Then the folder structure should be:  
 ``` 
 
-\result  
+\result\TEED-UDED  
 ....|-png  
 ....|...|-a.png  
 ....|...|-b.png  
@@ -103,9 +104,9 @@ Then the folder structure should be:
 ```
 
 ### 2. Download GT
-Create a `\GT` folder 
+Create a `\GT\dataset"\gt` folder, for example: `\GT\UDED\gt`
 
-Download a project and unzip the GT in the folder `\GT`
+Download a project and unzip the GT in the folder `\GT\"dataset"`
 
 They are available [here](https://drive.google.com/drive/folders/1j1TU28PinKipOh0egf8tbzI7EetAbzKh?usp=sharing)
 

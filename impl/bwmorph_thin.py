@@ -117,7 +117,7 @@ def bwmorph_thin(image, n_iter=None):
 
     if skel.ndim != 2:
         raise ValueError('2D array required')
-    if not np.all(np.in1d(image.flat, (0, 1))):
+    if not np.all(np.isin(image, (0, 1))):
         raise ValueError('Image contains values other than 0 and 1')
 
     # neighborhood mask
