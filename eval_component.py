@@ -39,15 +39,20 @@ def eval_one_epoch(args):
     file_format = args.file_format  # ".mat", ".npy" or ".png"
 
     thrs = 99 if args.full else 9
-    print("Edge-maps source: ", result_dir)
+
     if args.nms:
         print("Applying NMS?", args.nms)
+        print("Edge-maps source: ", result_dir, "and then", nms_dir)
         nms_process(result_dir, nms_dir, key, file_format,edge_size)
+    else:
+        print("Applying NMS?", args.nms)
+        print("Edge-maps source: ", nms_dir, "NMS not applied!..")
 
-    edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075,
+    mes =edges_eval_dir(nms_dir, gt_dir, thrs=thrs, thin=1, max_dist=0.0075,
                # numerical values depend on computational capacity
                workers=4,           # per-threshold
                workers_img=8)       # per-image
+    return mes
 
 if __name__ == '__main__':
     parser = ArgumentParser("edge eval")

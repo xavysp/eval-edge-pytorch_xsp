@@ -173,7 +173,11 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
     os.makedirs(eval_dir, exist_ok=True)
     filename = os.path.join(eval_dir, "eval_bdry.txt")
     if os.path.isfile(filename):
-        return
+        print("This dataset has been already evaluated")
+        line = np.loadtxt(filename, dtype=str)
+        print(f"ODS: {line[3]}    OIS: {line[6]} AP: {line[-1]}")
+        resp = True
+        return resp
 
     assert os.path.isdir(res_dir) and os.path.isdir(gt_dir)
     gt_files = sorted(glob.glob(os.path.join(gt_dir, "*.mat")) +
@@ -252,12 +256,15 @@ def edges_eval_dir(res_dir, gt_dir, cleanup=0, thrs=99, max_dist=0.0075, thin=Tr
     np.savetxt(os.path.join(eval_dir, "eval_bdry_thr.txt"), bdry_thr, fmt="%.6f")
     np.savetxt(os.path.join(eval_dir, "eval_bdry.txt"), bdry, fmt="%.6f")
     print(f"ODS: {ods_f:.4f}    OIS: {ois_f.item():.4f} AP: {ap:.4f}")
-
+    print("*" * 10)
+    print("Model evaluated on threshold=",thrs,"over 98, the evaluation procedure is performed for a publishing mode")
+    print("*"*10)
+    resp=True
     if cleanup:
         for f in os.listdir(eval_dir):
             if f.endswith("_ev.txt"):
                 os.remove(os.path.join(eval_dir, f))
         rmtree(res_dir)
-    return # me
+    return resp# me
 
 

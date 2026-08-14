@@ -114,18 +114,27 @@ They are available [here](https://drive.google.com/drive/folders/1j1TU28PinKipOh
 ### 3.Evaluation
 
 #### 3.1  The simplest eval
-Just use  
+We have a little change here, remember, before running the evaluation 
+you should prepare your dataset as" `GT/"DATASET"/"gt_dir""`, the DATASET and
+gt_dir is for your project.
+ Once the GT dirs are finished setting, we start with 
+the results folder, `result/"Model-DATASET"/` then `[png, nms]` folders.
+We are going work with TEED model  and UDED dataset, so I have prepared:
+`GT/UDED/gt_ed` and `result/TEED-UDED/[png,nms]`, see the shell:
 ``` shell
-python eval.py [input dir] -d [dataset name]  -f
+python eval.py -d UDED -m TEED  -gt gt_ed -nms -f
+```
+`-nms` TEED needs to apply NMS before evaluation and `-f` with the full
+evaluation performance. `-d` is your dataset, `-m` your model.
+`-gt` is the gt dir that is into your GT then dataset folder, by default it should be 
+"gt". We provide another example with [MarchED](https://github.com/Bedrettin-Cetinkaya/MatchED) model,
+as this edge detector does not need NMS so it should run as:
+
+``` shell
+ython eval.py -d UDED -m MatchED  -gt gt_ed  -f
 ```
 
-For example:
-
-``` shell
-python eval.py \result -d BSDS  -f
-```
-
-You can eval the result of BSDS500 in dir `\result` 
+At the end, your dir `result/MatchED-UDED` will have the following dirs: `nms, png, nms-eval`. 
 
 For higher automation, we implement automatic detection of folders with simple cycle. We use the `T` and `limit` parameters to control the sleep time and total wait time for the folder traversal, the default of which is 0.5 hours and 8 hours.
 
