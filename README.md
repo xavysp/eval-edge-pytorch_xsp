@@ -117,18 +117,18 @@ They are available [here](https://drive.google.com/drive/folders/1j1TU28PinKipOh
 
 #### 3.1  The simplest eval
 We have a little change here, remember, before running the evaluation 
-you should prepare your dataset as" `GT/"DATASET"/"gt_dir""`, the DATASET and
+you should prepare your dataset dir as" `GT/"DATASET"/"gt_dir""`, the DATASET and
 gt_dir is for your project.
- Once the GT dirs are finished setting, we start with 
+ Once your dataset target are organized in GT , we start with 
 the results folder, `result/"Model-DATASET"/` then `[png, nms]` folders.
-We are going work with TEED model  and UDED dataset, so I have prepared:
-`GT/UDED/gt_ed` and `result/TEED-UDED/[png,nms]`, see the shell:
+We are going work with TEED model  and UDED dataset, so I have prepared: the folders for the dataset
+`GT/UDED/gt_ed` and for the results`result/TEED-UDED/[png,nms]`. Once those settings are done, we can run the follow CLI:
 ``` shell
 python eval.py -d UDED -m TEED  -gt gt_ed -nms -f
 ```
 `-nms` TEED needs to apply NMS before evaluation and `-f` with the full
 evaluation performance. `-d` is your dataset, `-m` your model.
-`-gt` is the gt dir that is into your GT then dataset folder, by default it should be 
+`-gt` is the gt dir that is into your dataset folder, by default it should be 
 "gt". We provide another example with [MarchED](https://github.com/Bedrettin-Cetinkaya/MatchED) model,
 as this edge detector does not need NMS so it should run as:
 
@@ -138,26 +138,18 @@ ython eval.py -d UDED -m MatchED  -gt gt_ed  -f
 
 At the end, your dir `result/MatchED-UDED` will have the following dirs: `nms, png, nms-eval`. 
 
-For higher automation, we implement automatic detection of folders with simple cycle. We use the `T` and `limit` parameters to control the sleep time and total wait time for the folder traversal, the default of which is 0.5 hours and 8 hours.
+ **In the last update, this part have not been tested**. For higher automation, we implement automatic detection of folders with simple cycle. We use the `T` and `limit` parameters to control the sleep time and total wait time for the folder traversal, the default of which is 0.5 hours and 8 hours.
 
 #### 3.2 No constant monitoring
 If you only need to eval existing results, you can use `notwait` to cancel the automatic check and keep waiting, as follows:
 
 
 ``` shell
-python eval.py \result -d BSDS -nw -f
+python eval.py -m "model" -d BSDS -nw -f
 ```
 
-#### 3.3 Default dataset
 
-If you can include the dataset name in the path under eval, then you don't have to specify the dataset individually:
-
-
-``` shell
-python eval.py \result\bsds-result -nw -f
-```
-
-#### 3.4 Multiple paths
+#### 3.3 Multiple paths
 
 You can specify multiple paths to eval multiple sets of results at the same time.You need to place multiple paths inside the "", separated by Spaces. There is no support for evaling multiple datasets at the same time, so multiple results should be on the same dataset.		
 
